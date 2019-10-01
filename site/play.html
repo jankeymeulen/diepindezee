@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Diep In De Zee Fotowedstrijd</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/skeleton.css">
+    <link rel="icon" type="image/png" href="images/favicon.png">
+<script>
+  var loadFile = function(event) {
+    var output = document.getElementById('photoPreview');
+    output.src = URL.createObjectURL(event.target.files[0]);
+
+    document.getElementById('photoButton').innerHTML = "Probeer opnieuw";
+    
+    var submit = document.getElementById('submitDiv');
+    submit.style.display = "block";
+  };
+</script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+	<div class="twelve column" style="margin-top: 25%">
+	  <h4>Diep In De Zee Wedstrijd</h4>
+	</div>
+      </div>
+      <div class="row">
+	<div class="twelve column">
+	  <button id="photoButton" onclick="document.getElementById('photoInput').click();" class="button-primary">Neem een foto</button>
+	</div>
+      </div>
+      <div class="row">
+	      <div class="twelve column">	      
+      <img href="#" id="photoPreview" alt="" class="u-max-full-width"/>
+	      </div>
+      </div>
+      <div class="row" id=submitDiv style="display: none;">
+	      <div class="twelve column">	      
+	  <button id="submitButton" onclick="document.getElementById('photoInput').click();" class="button-primary">Neem een foto</button>
+	  <form action="/action_page.php">
+	      </div>
+      </div>
+    </div>
+	  <form action="/action_page.php">
+	    <input id="photoInput" type="file" style="display: none" name="photo" accept="image/*" capture="camera" onchange="loadFile(event)"/>
+	  </form>
+  </body>
+</html>
