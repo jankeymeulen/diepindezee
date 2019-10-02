@@ -1,0 +1,8 @@
+[
+    {
+      "origin": ["http://diepindezee.site"],
+      "responseHeader": ["Content-Type", "Access-Control-Allow-Origin", "Origin"],
+      "method": ["PUT"],
+      "maxAgeSeconds": 3600
+    }
+]
