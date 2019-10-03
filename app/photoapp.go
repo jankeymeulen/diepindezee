@@ -12,6 +12,9 @@ import (
 	"google.golang.org/appengine"
     "path"
     "io"
+    "google.golang.org/appengine/datastore"
+    "google.golang.org/appengine/image"
+    "google.golang.org/appengine/blobstore"
 )
 
 var (
@@ -20,6 +23,13 @@ var (
     photoBucketName string
     photoBucket     *storage.BucketHandle
 )
+
+type Photo struct {
+	Name          string
+    PublicURL     string
+    ServingURL    string
+	Votes         int
+}
 
 func main() {
     photoBucketName = os.Getenv("UPLOADABLE_BUCKET")
@@ -46,7 +56,7 @@ func uploadPhoto(r *http.Request) (url string, err error) {
 
 	// Entries are immutable, be aggressive about caching (1 day).
 	w.CacheControl = "public, max-age=86400"
-	const publicURL = "https://storage.googleapis.com/%s/%s"
+	//const publicURL = 
 
 	if _, err := io.Copy(w, f); err != nil {
 		return "", err
@@ -55,12 +65,37 @@ func uploadPhoto(r *http.Request) (url string, err error) {
 		return "", err
 	}
 
-	return fmt.Sprintf(publicURL, photoBucketName, name), nil
+	return name, nil
+}
+
+func storeDB(r *http.Request,name string) (err error) {
+    ctx := appengine.NewContext(r)
+
+    key := datastore.NewIncompleteKey(ctx, "Photo", nil)
+    photo := new(Photo)
+
+    photo.Name = name
+    photo.PublicURL = fmt.Sprintf("https://storage.googleapis.com/%s/%s",photoBucketName,name)
+    blobFilename := fmt.Sprintf("gs/%s/%s",photoBucketName,name)
+    blobkey,_ := blobstore.BlobKeyForFile(ctx,blobFilename)
+    var servingURLOptions image.ServingURLOptions
+    servingURLOptions.Secure = true
+    servingURLOptions.Size = 1200
+    servingURLOptions.Crop = false
+    servingURL,_ := image.ServingURL(ctx, blobkey,&servingURLOptions)
+    photo.ServingURL = servingURL.String()
+    photo.Votes = 0
+
+    if _, err := datastore.Put(ctx, key, photo); err != nil {
+        return err
+    }
+    return nil
 }
 
 func uploadPhotoHandler(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Access-Control-Allow-Origin", "*")
-	publicURL,err := uploadPhoto(r)
-    fmt.Fprintf(w,"%s\n%s\n",publicURL,err)
+	publicURL,berr := uploadPhoto(r)
+    derr := storeDB(r,publicURL)
+    fmt.Fprintf(w,"URL %s\nBucketErr %s\nDatastoreErr %s\n",publicURL,berr,derr)
     fmt.Fprintf(w, "Done.\n")
 }
