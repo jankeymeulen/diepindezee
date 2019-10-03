@@ -1,86 +1,66 @@
-// Copyright 2019 Google Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package main
 
 import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
+    //"time"
+    "context"
+    //"errors"
 	"cloud.google.com/go/storage"
 	"github.com/google/uuid"
 	"google.golang.org/appengine"
+    "path"
+    "io"
 )
 
 var (
-	// serviceAccountName represents Service Account Name.
-	// See more details: https://cloud.google.com/iam/docs/service-accounts
-	serviceAccountName string
-
-	// serviceAccountID follows the below format.
-	// "projects/%s/serviceAccounts/%s"
-	serviceAccountID string
-
 	// uploadableBucket is the destination bucket.
 	// All users will upload files directly to this bucket by using generated Signed URL.
-	uploadableBucket string
-	
-	// privateKey
-	privateKey string
+    photoBucketName string
+    photoBucket     *storage.BucketHandle
 )
 
-func signHandler(w http.ResponseWriter, r *http.Request) {
-	// Accepts only POST method.
-	// Otherwise, this handler returns 405.
-	//if r.Method != "POST" {
-	//	w.Header().Set("Allow", "POST")
-	//	http.Error(w, "Only POST is supported", http.StatusMethodNotAllowed)
-	//	return
-	//}
+func main() {
+    photoBucketName = os.Getenv("UPLOADABLE_BUCKET")
+    ctx := context.Background()
+    client,_ := storage.NewClient(ctx)
+	photoBucket = client.Bucket(photoBucketName)
 
-	// Generates an object key for use in new Cloud Storage Object.
-	// It's not duplicate with any object keys because of UUID.
-	key := uuid.New().String()
-	if ext := r.FormValue("ext"); ext != "" {
-		key += fmt.Sprintf(".%s", ext)
+	http.HandleFunc("/uploadPhoto", uploadPhotoHandler)
+    appengine.Main()
+}
+    
+func uploadPhoto(r *http.Request) (url string, err error) {
+	f, fh, err := r.FormFile("image")
+
+	// random filename, retaining existing extension.
+	name := uuid.Must(uuid.New(),err).String() + path.Ext(fh.Filename,)
+
+	ctx := context.Background()
+	w := photoBucket.Object(name).NewWriter(ctx)
+
+	// Warning: storage.AllUsers gives public read access to anyone.
+	w.ACL = []storage.ACLRule{{Entity: storage.AllUsers, Role: storage.RoleReader}}
+	w.ContentType = fh.Header.Get("Content-Type")
+
+	// Entries are immutable, be aggressive about caching (1 day).
+	w.CacheControl = "public, max-age=86400"
+	const publicURL = "https://storage.googleapis.com/%s/%s"
+
+	if _, err := io.Copy(w, f); err != nil {
+		return "", err
+	}
+	if err := w.Close(); err != nil {
+		return "", err
 	}
 
-	// Generates a signed URL for use in the PUT request to GCS.
-	// Generated URL should be expired after 15 mins.
-	url,_ := storage.SignedURL(uploadableBucket, key, &storage.SignedURLOptions{
-		GoogleAccessID: serviceAccountName,
-		Method:         "PUT",
-		Expires:        time.Now().Add(15 * time.Minute),
-		ContentType:    "image/jpeg",
-		PrivateKey:	[]byte(privateKey),
-	})
-	w.WriteHeader(http.StatusOK)
-	w.Header().Add("Access-Control-Allow-Origin", "*")
-	fmt.Fprintln(w, url)
+	return fmt.Sprintf(publicURL, photoBucketName, name), nil
 }
 
-func main() {
-	uploadableBucket = os.Getenv("UPLOADABLE_BUCKET")
-	serviceAccountName = os.Getenv("SERVICE_ACCOUNT")
-	privateKey = os.Getenv("PRIVATE_KEY")
-	serviceAccountID = fmt.Sprintf(
-		"projects/%s/serviceAccounts/%s",
-		os.Getenv("GOOGLE_CLOUD_PROJECT"),
-		serviceAccountName,
-	)
-
-	http.HandleFunc("/sign", signHandler)
-	appengine.Main()
+func uploadPhotoHandler(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+	publicURL,err := uploadPhoto(r)
+    fmt.Fprintf(w,"%s\n%s\n",publicURL,err)
+    fmt.Fprintf(w, "Done.\n")
 }

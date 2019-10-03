@@ -10,18 +10,53 @@
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/skeleton.css">
     <link rel="icon" type="image/png" href="images/favicon.png">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script>
-var loadFile = function(event) {
-  var output = document.getElementById('photoPreview');
-  output.src = URL.createObjectURL(event.target.files[0]);
 
-  document.getElementById('photoButton').innerHTML = "Probeer opnieuw";
+  var loadFile = function(event) {
+     $('#photoPreview').attr("src",URL.createObjectURL(event.target.files[0]));
+     $('#previewDiv').show();
+     $('#photoButton').html("Probeer opnieuw");
+     $('#submitDiv').show();
+     $('#resultDiv').hide();
+  };
 
-  var submit = document.getElementById('submitDiv');
-  submit.style.display = "block";
-};
+  function uploadPhoto() {
+    $.ajax({
+        url: 'https://diepindezee.appspot.com/uploadPhoto',    
+        type: 'POST',   
+        data: new FormData($('form')[0]),
+        cache: false,
+        contentType: false,
+        processData: false,
+        success: uploadDone,
+        error: uploadFail
+    });
+  }
 
-document.onload = async function() { document.getElementById('form').action = fetch("https://diepindezee.site/sign"); };
+  function submitPhoto() {
+    $('#submitButton').html("   ...   ");
+    uploadPhoto();
+  }
+
+  function uploadDone() {
+      $('#photoPreview').attr("src","");
+      $('#previewDiv').hide();
+      $('#resultText').html("Gelukt!");
+      $('#resultDiv').show();
+      $('#photoButton').html("Neem nog een foto");
+      $('#photoButton').show();
+      $('#submitDiv').hide();
+      $('#submitButton').html("Versturen");
+  }
+
+  function uploadFail() {
+      $('#resultText').html("Mislukt!");
+      $('#resultDiv').show();
+      $('#photoButton').hide();
+      $('#submitButton').html("Probeer opnieuw");
+  }
+
     </script>
   </head>
   <body>
@@ -33,22 +68,25 @@ document.onload = async function() { document.getElementById('form').action = fe
       </div>
       <div class="row">
 	<div class="twelve column">
-	  <button id="photoButton" onclick="document.getElementById('photoInput').click();" class="button-primary">Neem een foto</button>
+	  <button id="photoButton" onclick="$('#photoInput').click();" class="button-primary">Neem een foto</button>
 	</div>
       </div>
       <div class="row">
-	<div class="twelve column">	      
+	<div class="twelve column" id="previewDiv" style="display: none;">	      
 	  <img href="#" id="photoPreview" alt="" class="u-max-full-width"/>
 	</div>
+    <div class="twelve column" id="resultDiv" style="display: none;">	      
+	  <p id="resultText"/>
+	</div>
       </div>
-      <div class="row" id=submitDiv style="display: none;">
+      <div class="row" id="submitDiv" style="display: none;">
 	<div class="twelve column">	      
-	  <button id="submitButton" onclick="document.getElementById('form').submit();" class="button-primary">Versturen</button>
+	  <button id="submitButton" onclick="submitPhoto();" class="button-primary">Versturen</button>
 	</div>
       </div>
     </div>
-    <form action="" method="PUT" id="form">
-      <input id="photoInput" type="file" style="display: none" name="photo" accept="image/*" capture="camera" onchange="loadFile(event)"/>
+    <form action="#" method="PUT" id="photoForm">
+      <input id="photoInput" type="file" style="display: none" name="image" accept="image/*" capture="camera" onchange="loadFile(event)"/>
     </form>
   </body>
 </html>
