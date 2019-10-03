@@ -76,7 +76,7 @@ func storeDB(r *http.Request,name string) (err error) {
 
     photo.Name = name
     photo.PublicURL = fmt.Sprintf("https://storage.googleapis.com/%s/%s",photoBucketName,name)
-    blobFilename := fmt.Sprintf("gs/%s/%s",photoBucketName,name)
+    blobFilename := fmt.Sprintf("/gs/%s/%s",photoBucketName,name)
     blobkey,_ := blobstore.BlobKeyForFile(ctx,blobFilename)
     var servingURLOptions image.ServingURLOptions
     servingURLOptions.Secure = true
