@@ -16,6 +16,7 @@ import (
     "google.golang.org/appengine/image"
     "google.golang.org/appengine/blobstore"
     "encoding/json"
+     "google.golang.org/appengine/log"
 )
 
 var (
@@ -100,15 +101,35 @@ func uploadPhotoHandler(w http.ResponseWriter, r *http.Request) {
     fmt.Fprintf(w, "Done.\n")
 }
 
+func votePhotoHandler(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+
+    r.ParseForm()
+
+    ctx := appengine.NewContext(r)
+    photos := make([]*Photo, 0)
+    q := datastore.NewQuery("Photo").Filter("Name = "+r.Form.name).Order("-Votes")
+
+    keys, _ := q.GetAll(ctx, &photos)
+
+    log.Debugf(ctx, "Found [%d] keys", len(keys))
+
+    jsonPhotos, _ := json.Marshal(photos)
+    w.Header().Set("Content-Type", "application/json")
+    w.Write(jsonPhotos)
+}
+
 func listPhotoHandler(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Access-Control-Allow-Origin", "*")
 
-    ctx := context.Background()
+    ctx := appengine.NewContext(r)
     photos := make([]*Photo, 0)
     q := datastore.NewQuery("Photo").
-            Order("Votes")
+            Order("-Votes")
 
-    _, _ = q.GetAll(ctx, &photos)
+    keys, _ := q.GetAll(ctx, &photos)
+
+    log.Debugf(ctx, "Found [%d] keys", len(keys))
 
     jsonPhotos, _ := json.Marshal(photos)
     w.Header().Set("Content-Type", "application/json")

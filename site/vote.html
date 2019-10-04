@@ -1,51 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Diep In De Zee Fotowedstrijd</title>
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
-    <link rel="stylesheet" href="css/normalize.css">
-    <link rel="stylesheet" href="css/skeleton.css">
-    <link rel="icon" type="image/png" href="images/favicon.png">
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="//cdn.jsdelivr.net/npm/fingerprintjs2@2.1.0/dist/fingerprint2.min.js"></script>
-    <script>
+<head>
+  <meta charset="utf-8">
+  <title>Diep In De Zee Fotowedstrijd</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/skeleton.css">
+  <link rel="icon" type="image/png" href="images/favicon.png">
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/fingerprintjs2@2.1.0/dist/fingerprint2.min.js"></script>
+  <script>
+    var murmur = "";
     if (window.requestIdleCallback) {
-    requestIdleCallback(function () {
+      requestIdleCallback(function () {
         Fingerprint2.get(function (components) {
-            var values = components.map(function (component) { return component.value })
-            var murmur = Fingerprint2.x64hash128(values.join(''), 31)
-            console.log(murmur)
-            $('#fingerprint').html(murmur);
+          var values = components.map(function (component) { return component.value })
+          murmur = Fingerprint2.x64hash128(values.join(''), 31)
+          console.log(murmur)
         })
-    })
-} else {
-    setTimeout(function () {
+      })
+    } else {
+      setTimeout(function () {
         Fingerprint2.get(function (components) {
-            var values = components.map(function (component) { return component.value })
-            var murmur = Fingerprint2.x64hash128(values.join(''), 31)
-            console.log(murmur)
-            $('#fingerprint').html(murmur);
+          var values = components.map(function (component) { return component.value })
+          murmur = Fingerprint2.x64hash128(values.join(''), 31)
+          console.log(murmur)
         }) 
-    }, 500)
-}
-</script>
-  </head>
-  <body>
-    <div class="container">
-      <div class="row">
-	<div class="twelve column" style="margin-top: 25%">
-	  <h4>Diep In De Zee Wedstrijd</h4>
-	</div>
-      </div>
-      <div class="row">
-	<div class="twelve column" id="fingerprint">
-	 
-	</div>
-      </div>
-    </div>
-  </body>
+      }, 500)
+    }
+
+    $( document ).ready(function() {
+      $.getJSON( "https://diepindezee.appspot.com/listPhoto", function( data ) {
+        var items = [];
+        $.each( data, function( key, val ) {
+          items.push(
+            "<div class='row' id='" + val.Name + "'>\n"+
+            "<div class='twelve columns'>\n"+
+            "<img src='"+val.ServingURL.replace("s1200","s500")+"'/>\n"+
+            "<button class='button-primary' style='font-size: 1.8rem;'>"+val.Votes+" 🐚</button>"+
+            "</div>\n</div>" );
+        });
+       
+       console.log(items.join(""))
+       $(items.join("\n")).appendTo(".container")
+      });
+    });
+
+  </script>
+</head>
+<body>
+  <div class="container" id="#container">
+    <div class="row">
+     <div class="twelve column" style="margin-top: 25%">
+       <h4>Diep In De Zee Wedstrijd</h4>
+     </div>
+   </div>
+   <div class="row">
+     <div class="twelve column" id="fingerprint">
+     </div>
+   </div>
+   <div class="row">
+     <div class="twelve column" id="test">
+     </div>
+   </div>
+ </div>
+</body>
 </html>

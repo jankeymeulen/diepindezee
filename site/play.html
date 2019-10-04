@@ -1,36 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Diep In De Zee Fotowedstrijd</title>
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
-    <link rel="stylesheet" href="css/normalize.css">
-    <link rel="stylesheet" href="css/skeleton.css">
-    <link rel="icon" type="image/png" href="images/favicon.png">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script>
+<head>
+  <meta charset="utf-8">
+  <title>Diep In De Zee Fotowedstrijd</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/skeleton.css">
+  <link rel="icon" type="image/png" href="images/favicon.png">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script>
 
-  var loadFile = function(event) {
+    var loadFile = function(event) {
      $('#photoPreview').attr("src",URL.createObjectURL(event.target.files[0]));
      $('#previewDiv').show();
      $('#photoButton').html("Probeer opnieuw");
      $('#submitDiv').show();
      $('#resultDiv').hide();
-  };
+   };
 
-  function uploadPhoto() {
+   function uploadPhoto() {
     $.ajax({
-        url: 'https://diepindezee.appspot.com/uploadPhoto',    
-        type: 'POST',   
-        data: new FormData($('form')[0]),
-        cache: false,
-        contentType: false,
-        processData: false,
-        success: uploadDone,
-        error: uploadFail
+      url: 'https://diepindezee.appspot.com/uploadPhoto',    
+      type: 'POST',   
+      data: new FormData($('form')[0]),
+      cache: false,
+      contentType: false,
+      processData: false,
+      success: uploadDone,
+      error: uploadFail
     });
   }
 
@@ -40,53 +40,53 @@
   }
 
   function uploadDone() {
-      $('#photoPreview').attr("src","");
-      $('#previewDiv').hide();
-      $('#resultText').html("Gelukt!");
-      $('#resultDiv').show();
-      $('#photoButton').html("Neem nog een foto");
-      $('#photoButton').show();
-      $('#submitDiv').hide();
-      $('#submitButton').html("Versturen");
+    $('#photoPreview').attr("src","");
+    $('#previewDiv').hide();
+    $('#resultText').html("Gelukt!");
+    $('#resultDiv').show();
+    $('#photoButton').html("Neem nog een foto");
+    $('#photoButton').show();
+    $('#submitDiv').hide();
+    $('#submitButton').html("Versturen");
   }
 
   function uploadFail() {
-      $('#resultText').html("Mislukt!");
-      $('#resultDiv').show();
-      $('#photoButton').hide();
-      $('#submitButton').html("Probeer opnieuw");
+    $('#resultText').html("Mislukt!");
+    $('#resultDiv').show();
+    $('#photoButton').hide();
+    $('#submitButton').html("Probeer opnieuw");
   }
 
-    </script>
-  </head>
-  <body>
-    <div class="container">
-      <div class="row">
-	<div class="twelve column" style="margin-top: 25%">
-	  <h4>Diep In De Zee Wedstrijd</h4>
-	</div>
-      </div>
-      <div class="row">
-	<div class="twelve column">
-	  <button id="photoButton" onclick="$('#photoInput').click();" class="button-primary">Neem een foto</button>
-	</div>
-      </div>
-      <div class="row">
-	<div class="twelve column" id="previewDiv" style="display: none;">	      
-	  <img href="#" id="photoPreview" alt="" class="u-max-full-width"/>
-	</div>
-    <div class="twelve column" id="resultDiv" style="display: none;">	      
-	  <p id="resultText"/>
-	</div>
-      </div>
-      <div class="row" id="submitDiv" style="display: none;">
-	<div class="twelve column">	      
-	  <button id="submitButton" onclick="submitPhoto();" class="button-primary">Versturen</button>
-	</div>
-      </div>
-    </div>
-    <form action="#" method="PUT" id="photoForm">
-      <input id="photoInput" type="file" style="display: none" name="image" accept="image/*" capture="camera" onchange="loadFile(event)"/>
-    </form>
-  </body>
+</script>
+</head>
+<body>
+  <div class="container">
+    <div class="row">
+     <div class="twelve column" style="margin-top: 25%">
+       <h4>Diep In De Zee Wedstrijd</h4>
+     </div>
+   </div>
+   <div class="row">
+     <div class="twelve column">
+       <button id="photoButton" onclick="$('#photoInput').click();" class="button-primary">Neem een foto</button>
+     </div>
+   </div>
+   <div class="row">
+     <div class="twelve column" id="previewDiv" style="display: none;">	      
+       <img href="#" id="photoPreview" alt="" class="u-max-full-width"/>
+     </div>
+     <div class="twelve column" id="resultDiv" style="display: none;">	      
+       <p id="resultText"/>
+     </div>
+   </div>
+   <div class="row" id="submitDiv" style="display: none;">
+     <div class="twelve column">	      
+       <button id="submitButton" onclick="submitPhoto();" class="button-primary">Versturen</button>
+     </div>
+   </div>
+ </div>
+ <form action="#" method="PUT" id="photoForm">
+  <input id="photoInput" type="file" style="display: none" name="image" accept="image/*" capture="camera" onchange="loadFile(event)"/>
+</form>
+</body>
 </html>
