@@ -15,11 +15,10 @@ import (
     "google.golang.org/appengine/datastore"
     "google.golang.org/appengine/image"
     "google.golang.org/appengine/blobstore"
+    "encoding/json"
 )
 
 var (
-	// uploadableBucket is the destination bucket.
-	// All users will upload files directly to this bucket by using generated Signed URL.
     photoBucketName string
     photoBucket     *storage.BucketHandle
 )
@@ -38,6 +37,7 @@ func main() {
 	photoBucket = client.Bucket(photoBucketName)
 
 	http.HandleFunc("/uploadPhoto", uploadPhotoHandler)
+    http.HandleFunc("/listPhoto", listPhotoHandler)
     appengine.Main()
 }
     
@@ -98,4 +98,19 @@ func uploadPhotoHandler(w http.ResponseWriter, r *http.Request) {
     derr := storeDB(r,publicURL)
     fmt.Fprintf(w,"URL %s\nBucketErr %s\nDatastoreErr %s\n",publicURL,berr,derr)
     fmt.Fprintf(w, "Done.\n")
+}
+
+func listPhotoHandler(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+
+    ctx := context.Background()
+    photos := make([]*Photo, 0)
+    q := datastore.NewQuery("Photo").
+            Order("Votes")
+
+    _, _ = q.GetAll(ctx, &photos)
+
+    jsonPhotos, _ := json.Marshal(photos)
+    w.Header().Set("Content-Type", "application/json")
+    w.Write(jsonPhotos)
 }
