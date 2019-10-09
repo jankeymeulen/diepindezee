@@ -42,7 +42,7 @@
   function uploadDone() {
     $('#photoPreview').attr("src","");
     $('#previewDiv').hide();
-    $('#resultText').html("Gelukt!");
+    $('#resultText').html("<b>Gelukt!</b>");
     $('#resultDiv').show();
     $('#photoButton').html("Neem nog een foto");
     $('#photoButton').show();
@@ -51,7 +51,7 @@
   }
 
   function uploadFail() {
-    $('#resultText').html("Mislukt!");
+    $('#resultText').html("<b>Mislukt!<b>");
     $('#resultDiv').show();
     $('#photoButton').hide();
     $('#submitButton').html("Probeer opnieuw");
@@ -69,6 +69,7 @@
    <div class="row">
      <div class="twelve column">
        <button id="photoButton" onclick="$('#photoInput').click();" class="button-primary">Neem een foto</button>
+       <a class="button button-primary" href="/">Terug</a>
      </div>
    </div>
    <div class="row">
