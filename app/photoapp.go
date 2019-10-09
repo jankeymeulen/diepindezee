@@ -31,6 +31,11 @@ type Photo struct {
 	Votes         int
 }
 
+type Voter struct {
+    Murmur        string
+    Votes         int
+}
+
 func main() {
     photoBucketName = os.Getenv("UPLOADABLE_BUCKET")
     ctx := context.Background()
@@ -39,6 +44,9 @@ func main() {
 
 	http.HandleFunc("/uploadPhoto", uploadPhotoHandler)
     http.HandleFunc("/listPhoto", listPhotoHandler)
+    http.HandleFunc("/votePhoto", votePhotoHandler)
+    http.HandleFunc("/getVoter",getVoterHandler)
+    http.HandleFunc("/addVotes",addVotesHandler)
     appengine.Main()
 }
     
@@ -72,21 +80,34 @@ func uploadPhoto(r *http.Request) (url string, err error) {
 func storeDB(r *http.Request,name string) (err error) {
     ctx := appengine.NewContext(r)
 
-    key := datastore.NewIncompleteKey(ctx, "Photo", nil)
+    // struct to be stored
     photo := new(Photo)
 
+    // filename from photo
     photo.Name = name
+
+    // public URL from the bucket
     photo.PublicURL = fmt.Sprintf("https://storage.googleapis.com/%s/%s",photoBucketName,name)
+
+    // get the legacy blobstore key
     blobFilename := fmt.Sprintf("/gs/%s/%s",photoBucketName,name)
     blobkey,_ := blobstore.BlobKeyForFile(ctx,blobFilename)
+
+    // options for the serving URL ( for automatic scaling )
     var servingURLOptions image.ServingURLOptions
     servingURLOptions.Secure = true
     servingURLOptions.Size = 1200
     servingURLOptions.Crop = false
+
+    // get the serving URL
     servingURL,_ := image.ServingURL(ctx, blobkey,&servingURLOptions)
     photo.ServingURL = servingURL.String()
+
+    // all photos start with one vote
     photo.Votes = 0
 
+    // create a key with the name as the ID and store it
+    key := datastore.NewKey(ctx, "Photo", name, 0, nil)
     if _, err := datastore.Put(ctx, key, photo); err != nil {
         return err
     }
@@ -101,22 +122,97 @@ func uploadPhotoHandler(w http.ResponseWriter, r *http.Request) {
     fmt.Fprintf(w, "Done.\n")
 }
 
+func addVotesHandler(w http.ResponseWriter, r *http.Request) {
+    ctx := appengine.NewContext(r)
+    voters := make([]*Voter, 0)
+    q := datastore.NewQuery("Voter").Filter("Votes<",5)
+
+    keys, _ := q.GetAll(ctx, &voters)
+
+    log.Debugf(ctx, "Found [%d] voters", len(keys))
+
+    for _,voter := range voters {
+        voter.Votes = voter.Votes+1
+    }
+
+    if _, err := datastore.PutMulti(ctx, keys, voters); err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        log.Debugf(ctx, "Error increasing votes:\n%s\n", err)
+        return
+    }
+
+    fmt.Fprintf(w,"Added votes to [%d] keys\n",len(keys))
+}
+
+func getVoterHandler(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+
+    r.ParseForm()
+
+    ctx := appengine.NewContext(r)
+    voter := new(Voter)
+    key := datastore.NewKey(ctx, "Voter", r.FormValue("voter"), 0, nil)
+
+    if err := datastore.Get(ctx, key, voter); err != nil {
+        voter.Murmur = r.FormValue("voter")
+        voter.Votes = 5
+        datastore.Put(ctx,key,voter)
+        log.Debugf(ctx, "New voter [%s]\n", voter.Murmur)
+    }
+
+    log.Debugf(ctx, "Found voter [%s]\n", voter.Murmur)
+
+    jsonVoter, _ := json.Marshal(voter)
+    w.Header().Set("Content-Type", "application/json")
+    w.Write(jsonVoter)
+}
+
 func votePhotoHandler(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Access-Control-Allow-Origin", "*")
 
     r.ParseForm()
 
     ctx := appengine.NewContext(r)
-    photos := make([]*Photo, 0)
-    q := datastore.NewQuery("Photo").Filter("Name = "+r.Form.name).Order("-Votes")
 
-    keys, _ := q.GetAll(ctx, &photos)
+    voter := new(Voter)
+    voterKey := datastore.NewKey(ctx, "Voter", r.FormValue("voter"), 0, nil)
 
-    log.Debugf(ctx, "Found [%d] keys", len(keys))
+    if err := datastore.Get(ctx, voterKey, voter); err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        log.Debugf(ctx, "Error getting voter key:\n%s\n", err)
+        return
+    }
 
-    jsonPhotos, _ := json.Marshal(photos)
+    photo := new(Photo)
+    photoKey := datastore.NewKey(ctx, "Photo", r.FormValue("name"), 0, nil)
+
+    if err := datastore.Get(ctx, photoKey, photo); err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        log.Debugf(ctx, "Error getting photo key:\n%s\n", err)
+        return
+    }
+
+    if voter.Votes > 0 {
+        voter.Votes = voter.Votes - 1
+        photo.Votes = photo.Votes + 1
+    }
+
+    if _, err := datastore.Put(ctx, voterKey, voter); err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        log.Debugf(ctx, "Error saving voter:\n%s\n", err)
+        return
+    }
+
+    if _, err := datastore.Put(ctx, photoKey, photo); err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        log.Debugf(ctx, "Error saving vote:\n%s\n", err)
+        return
+    }
+
+    log.Debugf(ctx, "Voter [%s] voted for photo [%s] ", voter.Murmur, photo.Name)
+
     w.Header().Set("Content-Type", "application/json")
-    w.Write(jsonPhotos)
+    //w.Write(jsonPhotos)
 }
 
 func listPhotoHandler(w http.ResponseWriter, r *http.Request) {
