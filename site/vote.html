@@ -13,23 +13,50 @@
   <script src="//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/fingerprintjs2@2.1.0/dist/fingerprint2.min.js"></script>
   <script>
+    function vote(name) {
+      console.log("vote for "+name+" from "+murmur);
+      $.get( "https://diepindezee.appspot.com/votePhoto", { name: name, voter: murmur } );
+      location.reload();
+    }
+
+    function showBucket() {
+      $.getJSON( "https://diepindezee.appspot.com/getVoter", { voter: murmur }, function( data ) {
+        console.log(data)
+        if(data.Votes == 5) {
+          $("#votesLeft").html("<p><b>Emmer is vol met "+data.Votes+" 🐚.</b></p>");
+          $(".button-primary.votebutton").removeClass("disabled");
+        }
+        else if(data.Votes > 0) {
+          $("#votesLeft").html("<p><b>Nog "+data.Votes+" 🐚 in de emmer, elke 10 minuten komt er een nieuwe bij.</b></p>");
+          $(".button-primary.votebutton").removeClass("disabled");
+        }
+        else {
+          $("#votesLeft").html("<p><b>Emmer is leeg, elke 10 minuten komt er een nieuwe 🐚 bij.</b></p>");
+          $(".button-primary.votebutton").addClass("disabled");
+        }
+      });
+    }
+
     var murmur = "";
     if (window.requestIdleCallback) {
       requestIdleCallback(function () {
         Fingerprint2.get(function (components) {
-          var values = components.map(function (component) { return component.value })
-          murmur = Fingerprint2.x64hash128(values.join(''), 31)
-          console.log(murmur)
-        })
-      })
+          var values = components.map(function (component) { return component.value });
+          murmur = Fingerprint2.x64hash128(values.join(''), 31);
+          console.log(murmur);
+          showBucket();
+        });
+      });
+      
     } else {
       setTimeout(function () {
         Fingerprint2.get(function (components) {
-          var values = components.map(function (component) { return component.value })
-          murmur = Fingerprint2.x64hash128(values.join(''), 31)
-          console.log(murmur)
-        }) 
-      }, 500)
+          var values = components.map(function (component) { return component.value });
+          murmur = Fingerprint2.x64hash128(values.join(''), 31);
+          console.log(murmur);
+          showBucket();
+        }) ;
+      }, 500);
     }
 
     $( document ).ready(function() {
@@ -39,12 +66,10 @@
           items.push(
             "<div class='row' id='" + val.Name + "'>\n"+
             "<div class='twelve columns'>\n"+
-            "<img src='"+val.ServingURL.replace("s1200","s500")+"'/>\n"+
-            "<button class='button-primary' style='font-size: 1.8rem;'>"+val.Votes+" 🐚</button>"+
+            "<img src='"+val.ServingURL.replace("s1200","s500-l60")+"'/>\n"+
+            "<button class='button-primary votebutton' style='font-size: 1.8rem;' onclick='vote(\""+val.Name+"\")'>"+val.Votes+" 🐚</button>"+
             "</div>\n</div>" );
         });
-       
-       console.log(items.join(""))
        $(items.join("\n")).appendTo(".container")
       });
     });
@@ -59,11 +84,12 @@
      </div>
    </div>
    <div class="row">
-     <div class="twelve column" id="fingerprint">
+     <div class="twelve column">
+       <a class="button button-primary" href="/">Terug</a>
      </div>
    </div>
    <div class="row">
-     <div class="twelve column" id="test">
+     <div class="twelve column" id="votesLeft">
      </div>
    </div>
  </div>
