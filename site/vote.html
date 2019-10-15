@@ -25,14 +25,17 @@
         if(data.Votes == 5) {
           $("#votesLeft").html("<p><b>Emmer is vol met "+data.Votes+" 🐚.</b></p>");
           $(".button-primary.votebutton").removeClass("disabled");
+          $(".button-primary.votebutton").attr("disabled", false);
         }
         else if(data.Votes > 0) {
           $("#votesLeft").html("<p><b>Nog "+data.Votes+" 🐚 in de emmer, elke 10 minuten komt er een nieuwe bij.</b></p>");
           $(".button-primary.votebutton").removeClass("disabled");
+          $(".button-primary.votebutton").attr("disabled", false);
         }
         else {
           $("#votesLeft").html("<p><b>Emmer is leeg, elke 10 minuten komt er een nieuwe 🐚 bij.</b></p>");
           $(".button-primary.votebutton").addClass("disabled");
+          $(".button-primary.votebutton").attr("disabled", true);
         }
       });
     }
@@ -66,7 +69,7 @@
           items.push(
             "<div class='row' id='" + val.Name + "'>\n"+
             "<div class='twelve columns'>\n"+
-            "<img src='"+val.ServingURL.replace("s1200","s500-l60")+"'/>\n"+
+            "<img class='u-max-full-width' src='"+val.ServingURL.replace("s1200","s500-l60-pp")+"'/>\n"+
             "<button class='button-primary votebutton' style='font-size: 1.8rem;' onclick='vote(\""+val.Name+"\")'>"+val.Votes+" 🐚</button>"+
             "</div>\n</div>" );
         });

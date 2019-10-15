@@ -132,7 +132,6 @@ img {
   border-width: 3px;
   border-style: solid;
   border-color: #FFF;
-  width: 80vw;
 }
 
 
@@ -238,6 +237,7 @@ input[type="button"].button-primary:focus {
   border-color: #1EAEDB; }
 button.disabled {
   background-color: #AAAAAA;
+  border-color: #666666;
 }
 
 
