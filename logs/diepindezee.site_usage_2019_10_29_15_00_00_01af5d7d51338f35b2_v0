@@ -1,0 +1,2 @@
+"time_micros","c_ip","c_ip_type","c_ip_region","cs_method","cs_uri","sc_status","cs_bytes","sc_bytes","time_taken_micros","cs_host","cs_referer","cs_user_agent","s_request_id","cs_operation","cs_bucket","cs_object"
+"1572364239084121","2a02:578:85b4:800:211:32ff:fe18:a761","2","","GET","/diepindezee.site/ElienPiet.tar","200","0","7910359040","1330076000","storage.googleapis.com","","Wget/1.19.1 (linux-gnu),gzip(gfe)","AEnB2UqVE_OtnrIw4K0VTj4WIGh6eOdGq4b-svxXm7r5lN9Cp4eYpKflpABVmMQBq2n14zJGnm_adUjiUt32ykWD4TJaj4Ikzg","GET_Object","diepindezee.site","ElienPiet.tar"
